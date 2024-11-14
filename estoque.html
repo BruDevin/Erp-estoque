@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Controle de Estoque</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        .form-container, .table-container {
+            margin: 20px auto;
+            max-width: 600px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        .filters {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .filters input {
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            cursor: pointer;
+        }
+        .btn {
+            padding: 8px 12px;
+            margin-right: 5px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Sistema de Controle de Estoque</h1>
+
+    <div class="form-container">
+        <div class="form-group">
+            <label for="itemName">Nome do Item:</label>
+            <input type="text" id="itemName">
+        </div>
+        <div class="form-group">
+            <label for="itemQuantity">Quantidade:</label>
+            <input type="number" id="itemQuantity">
+        </div>
+        <button class="btn" onclick="addItem()">Adicionar Item</button>
+    </div>
+
+    <div class="filters">
+        <input type="text" id="filterName" placeholder="Filtrar por nome..." onkeyup="filterItems()">
+        <button class="btn" onclick="sortByName()">Ordenar por Nome</button>
+        <button class="btn" onclick="sortByQuantity()">Ordenar por Quantidade</button>
+    </div>
+
+    <div class="table-container">
+        <table id="inventoryTable">
+            <thead>
+                <tr>
+                    <th>Nome do Item</th>
+                    <th>Quantidade</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Itens do estoque serão adicionados aqui -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        let inventory = JSON.parse(localStorage.getItem('inventory')) || [];
+
+        function addItem() {
+            const itemName = document.getElementById('itemName').value;
+            const itemQuantity = parseInt(document.getElementById('itemQuantity').value);
+
+            if (itemName && !isNaN(itemQuantity) && itemQuantity > 0) {
+                const item = { name: itemName, quantity: itemQuantity };
+                inventory.push(item);
+                updateTable();
+                localStorage.setItem('inventory', JSON.stringify(inventory));
+                document.getElementById('itemName').value = '';
+                document.getElementById('itemQuantity').value = '';
+            } else {
+                alert('Por favor, insira um nome de item válido e uma quantidade maior que zero.');
+            }
+        }
+
+        function updateTable(filteredInventory = inventory) {
+            const tableBody = document.getElementById('inventoryTable').getElementsByTagName('tbody')[0];
+            tableBody.innerHTML = '';
+
+            filteredInventory.forEach((item, index) => {
+                const row = tableBody.insertRow();
+
+                const cellName = row.insertCell(0);
+                const cellQuantity = row.insertCell(1);
+                const cellActions = row.insertCell(2);
+
+                cellName.textContent = item.name;
+                cellQuantity.textContent = item.quantity;
+
+                const btnUpdate = document.createElement('button');
+                btnUpdate.textContent = 'Atualizar';
+                btnUpdate.classList.add('btn');
+                btnUpdate.onclick = () => updateItem(index);
+                cellActions.appendChild(btnUpdate);
+
+                const btnDelete = document.createElement('button');
+                btnDelete.textContent = 'Remover';
+                btnDelete.classList.add('btn', 'btn-danger');
+                btnDelete.onclick = () => deleteItem(index);
+                cellActions.appendChild(btnDelete);
+            });
+        }
+
+        function updateItem(index) {
+            const newQuantity = prompt('Digite a nova quantidade:', inventory[index].quantity);
+            if (newQuantity !== null && !isNaN(newQuantity) && parseInt(newQuantity) > 0) {
+                inventory[index].quantity = parseInt(newQuantity);
+                updateTable();
+                localStorage.setItem('inventory', JSON.stringify(inventory));
+            } else {
+                alert('Por favor, insira uma quantidade válida.');
+            }
+        }
+
+        function deleteItem(index) {
+            inventory.splice(index, 1);
+            updateTable();
+            localStorage.setItem('inventory', JSON.stringify(inventory));
+        }
+
+        function filterItems() {
+            const filterText = document.getElementById('filterName').value.toLowerCase();
+            const filteredInventory = inventory.filter(item => item.name.toLowerCase().includes(filterText));
+            updateTable(filteredInventory);
+        }
+
+        function sortByName() {
+            inventory.sort((a, b) => a.name.localeCompare(b.name));
+            updateTable();
+            localStorage.setItem('inventory', JSON.stringify(inventory));
+        }
+
+        function sortByQuantity() {
+            inventory.sort((a, b) => a.quantity - b.quantity);
+            updateTable();
+            localStorage.setItem('inventory', JSON.stringify(inventory));
+        }
+
+        window.onload = updateTable;
+    </script>
+
+</body>
+</html>
